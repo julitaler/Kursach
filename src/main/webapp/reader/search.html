@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поиск книг - Библиотека</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="../index.html">
+            <i class="bi bi-book-half"></i> Библиотека
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" href="search.html">
+                        <i class="bi bi-search"></i> Поиск
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="orders.html">
+                        <i class="bi bi-list-task"></i> Мои заказы
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <h2 class="mb-4"><i class="bi bi-search"></i> Поиск книг</h2>
+
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="input-group input-group-lg">
+                <input type="text" id="searchInput" class="form-control"
+                       placeholder="Введите название или автора книги...">
+                <button class="btn btn-primary" type="button" onclick="searchBooks()">
+                    <i class="bi bi-search"></i> Найти
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="searchResults" class="row">
+        <!-- Результаты поиска будут здесь -->
+    </div>
+</div>
+
+<!-- Модальное окно заказа -->
+<div class="modal fade" id="orderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Оформить заказ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="bookId">
+                <p id="bookTitle" class="fw-bold mb-3"></p>
+                <div class="mb-3">
+                    <label class="form-label">ID читателя</label>
+                    <input type="number" id="readerId" class="form-control"
+                           placeholder="Введите ID (1-5)" min="1" max="5">
+                    <div class="form-text">Доступные ID: 1, 2, 3, 4, 5</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Тип выдачи</label>
+                    <select id="loanType" class="form-select">
+                        <option value="HOME">Абонемент (на дом, 14 дней)</option>
+                        <option value="READING_ROOM">Читальный зал (1 день)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="createOrder()">
+                    <i class="bi bi-cart-check"></i> Заказать
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Обработка нажатия Enter в поле поиска
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchBooks();
+        }
+    });
+
+    // Функция поиска книг
+    function searchBooks() {
+        const query = document.getElementById('searchInput').value.trim();
+
+        if (!query) {
+            document.getElementById('searchResults').innerHTML =
+                '<div class="alert alert-warning">Введите текст для поиска</div>';
+            return;
+        }
+
+        // URL к Servlet (без REST API)
+        const apiUrl = 'http://localhost:8081/library/api/books?q=' + encodeURIComponent(query);
+
+        console.log('Запрос к API:', apiUrl);
+
+        fetch(apiUrl)
+            .then(response => {
+                console.log('Status:', response.status);
+                if (!response.ok) {
+                    throw new Error('HTTP error! status: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(books => {
+                console.log('Получено книг:', books.length);
+                displayResults(books);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('searchResults').innerHTML =
+                    '<div class="alert alert-danger">' +
+                    '<strong>Ошибка при поиске книг!</strong><br>' +
+                    error.message + '<br>' +
+                    '<small>Убедитесь, что сервер запущен</small>' +
+                    '</div>';
+            });
+    }
+
+    // Отображение результатов
+    function displayResults(books) {
+        const container = document.getElementById('searchResults');
+
+        if (books.length === 0) {
+            container.innerHTML = '<div class="alert alert-info">Книги не найдены</div>';
+            return;
+        }
+
+        container.innerHTML = `
+                <div class="alert alert-success">
+                    Найдено книг: ${books.length}
+                </div>
+            ` + books.map(book => `
+                <div class="col-md-6 mb-3">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary">
+                                <i class="bi bi-book"></i> ${book.title}
+                            </h5>
+                            <p class="card-text">
+                                <strong><i class="bi bi-person"></i> Автор:</strong> ${book.author}<br>
+                                <strong><i class="bi bi-upc"></i> ISBN:</strong> ${book.isbn || 'N/A'}<br>
+                                <strong><i class="bi bi-box"></i> ID книги:</strong> ${book.id}
+                            </p>
+                            <button class="btn btn-primary btn-lg w-100"
+                                    onclick="showOrderModal(${book.id}, '${book.title.replace(/'/g, "\\'")}')">
+                                <i class="bi bi-cart-plus"></i> Заказать эту книгу
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+    }
+
+    // Показ модального окна заказа
+    function showOrderModal(bookId, bookTitle) {
+        document.getElementById('bookId').value = bookId;
+        document.getElementById('bookTitle').textContent = 'Книга: ' + bookTitle;
+        document.getElementById('readerId').value = '';
+        new bootstrap.Modal(document.getElementById('orderModal')).show();
+    }
+
+    // Создание заказа
+    function createOrder() {
+        const readerId = document.getElementById('readerId').value;
+        const bookId = document.getElementById('bookId').value;
+        const loanType = document.getElementById('loanType').value;
+
+        if (!readerId || readerId < 1 || readerId > 5) {
+            alert('Пожалуйста, введите корректный ID читателя (1-5)');
+            return;
+        }
+
+        const orderUrl = 'http://localhost:8081/library/api/orders?readerId=' + readerId +
+            '&bookId=' + bookId + '&type=' + loanType;
+
+        console.log('Создание заказа:', orderUrl);
+
+        fetch(orderUrl, {
+            method: 'POST'
+        })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    return response.text().then(text => {
+                        throw new Error(text);
+                    });
+                }
+            })
+            .then(order => {
+                alert('✅ Заказ успешно создан!\n\nID заказа: ' + order.id +
+                    '\nКнига: ' + document.getElementById('bookTitle').textContent +
+                    '\nТип: ' + (loanType === 'HOME' ? 'Абонемент' : 'Читальный зал'));
+                bootstrap.Modal.getInstance(document.getElementById('orderModal')).hide();
+            })
+            .catch(error => {
+                alert('❌ Ошибка при создании заказа:\n' + error.message);
+            });
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+body {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.btn {
+    border-radius: 8px;
+}
+
+.table {
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.badge {
+    padding: 0.5em 0.8em;
+    font-size: 0.85em;
+}
+
+.display-1, .display-4 {
+    opacity: 0.9;
+}
+
+footer {
+    margin-top: auto;
+}
+
+.container {
+    margin-bottom: 2rem;
+}
