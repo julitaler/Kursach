@@ -179,8 +179,12 @@
     // Базовый URL API
     const API_BASE = 'http://localhost:8081/library/api';
 
-    // Загрузка активных выдач при загрузке страницы
+    // Проверка аутентификации при загрузке страницы
     document.addEventListener('DOMContentLoaded', function() {
+        if (sessionStorage.getItem('librarianLoggedIn') !== 'true') {
+            window.location.href = 'login.html';
+            return;
+        }
         loadActiveLoans();
     });
 
